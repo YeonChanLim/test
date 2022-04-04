@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0// EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ipp.mapper.NoticeMapper">
+
+	<!-- 공지사항 등록 -->
+	<insert id="adCreate" useGeneratedKeys="true" keyProperty="noticeNo">
+<!-- 		 <selectKey keyProperty="noticeNo" resultType="int" order="BEFORE">  -->
+<!-- 			select notice_no from dual </selectKey>  -->
+
+		insert into tbl_notice (title, content, register)
+		values (#{title}, #{content}, #{register})
+	</insert>
+
+	<!-- 공지사항 상세보기 -->
+	<select id="read" resultType="com.ipp.domain.NoticeVO">
+		select notice_no, title, content,
+		register, reg_date from tbl_notice 
+		where
+		notice_no = #{noticeNo}
+	</select>
+
+	<!-- 공지사항 수정 -->
+	<update id="adUpdate">
+		update tbl_notice
+		set
+		title = #{title},
+		content = #{content}
+		where
+		notice_no = #{noticeNo}
+	</update>
+
+	<!-- 공지사항 삭제 -->
+	<delete id="adDelete">
+		delete from tbl_notice
+		where
+		notice_no = #{noticeNo}
+	</delete>
+
+	<!-- 제목 검색 : 공지사항 제목, 내용 -->
+	<sql id="search">
+		<if test="searchType != null">
+			<if test="searchType == 'nn'.toString()">
+				and (title like CONCAT('%', #{keyword}, '%') OR content
+				like CONCAT('%', #{keyword},'%'))
+			</if>
+			<if test="searchType == 't'.toString()">
+				and title like CONCAT('%', #{keyword}, '%')
+			</if>
+			<if test="searchType == 'c'.toString()">
+				and content like CONCAT('%', #{keyword}, '%')
+			</if>
+		</if>
+	</sql>
+
+	<select id="listSearch" resultType="com.ipp.domain.NoticeVO">
+		<![CDATA[
+		select * 
+		from 
+		tbl_notice 
+		where notice_no >= 0
+	]]>
+		<include refid="search"></include>
+		
+	<![CDATA[
+	order by notice_no desc
+	limit #{pageStart}, #{perPageNum}
+	]]>
+	</select>
+
+	<select id="listSearchCount" resultType="int">
+		<![CDATA[
+		select count(*)
+		from
+				tbl_notice	
+			]]>
+		WHERE 1 = 1
+
+		<include refid="search"></include>
+
+
+
+	</select>
+	<!-- 다중 파일 등록 -->
+	<insert id="insertFile">
+		INSERT INTO TBL_NOTICE_FILE
+		(NOTICE_FILE_NAME
+		,NOTICE_NO)
+		VALUES
+		(#{noticeFileName}
+		,#{noticeNo})
+	</insert>
+
+
+	<!-- 다중 파일 삭제 -->
+	<delete id="deleteFile">
+		DELETE FROM TBL_NOTICE_FILE
+		WHERE NOTICE_NO=
+		#{noticeNo}
+	</delete>
+
+
+	<!-- 파일 목록 -->
+	<select id="fileList" resultType="com.ipp.domain.NoticeFileVO">
+		SELECT
+		NOTICE_FILE_NO
+		,SUBSTR(NOTICE_FILE_NAME, 50) AS NOTICE_FILE_NAME
+		,NOTICE_FILE_NAME AS
+		FILE_LOCATION
+		,NOTICE_NO
+		FROM
+		TBL_NOTICE_FILE
+		WHERE
+		NOTICE_NO = #{noticeNo}
+	</select>
+
+</mapper>

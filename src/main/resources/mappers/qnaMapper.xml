@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ipp.mapper.QnaMapper">
+
+	<!-- QnA - 등록 -->
+	<insert id="create" useGeneratedKeys="true" keyProperty="qnaNo">
+
+		INSERT INTO TBL_QnA
+		(QnA_TITLE, QnA_CONTENTS,
+		USER_NO )
+		VALUES
+		(#{qnaTitle}, #{qnaContents},
+		#{userNo})
+	</insert>
+
+	<!-- QnA - 조회 -->
+	<select id="read" resultType="com.ipp.domain.QnAVO">
+		<!-- SELECT
+		Q.QnA_NO,
+		Q.QnA_TITLE,
+		Q.QnA_CONTENTS,
+		Q.REGDATE,
+		Q.HITS,
+		Q.USER_NO,
+		U.UNAME AS USER_NAME
+		FROM
+		TBL_QnA Q, TBL_USER U
+		WHERE
+		Q.USER_NO = U.USID
+		AND QnA_NO = #{qnaNo} -->
+		select qna_no, qna_title, qna_contents, regdate, hits, user_no, from tbl_qna
+		where qna_no = #{qnaNo}
+	</select>
+
+	<!-- QnA - 수정 -->
+	<update id="update">
+		UPDATE
+		TBL_QnA
+		SET QnA_TITLE = #{qnaTitle},
+		QnA_CONTENTS = #{qnaContents}
+		WHERE
+		QNA_NO = #{qnaNo}
+	</update>
+
+	<!-- QnA - 삭제 -->
+	<delete id="delete">
+		DELETE
+		FROM
+		TBL_QnA
+		WHERE
+		QNA_NO = #{qnaNo}
+	</delete>
+
+	<!-- 페이징을 위한 (조건에 맞는 or 전체) 게시물 개수 카운트 -->
+	<select id="countPaging" resultType="int">
+      <![CDATA[
+          SELECT 
+             COUNT(qnaNo) 
+          FROM 
+             TBL_QnA
+         WHERE 
+            TBL_QnA >= 0  
+      ]]>
+	</select>
+
+	<!-- 제목 검색 -->
+	<sql id="search">
+		<if test="searchType != null">
+			<if test="searchType == 'nn'.toString()"> and (QnA_TITLE like CONCAT('%', #{keyword} , '%') OR
+				QnA_CONTENTS like CONCAT('%', #{keyword}, '%') OR USER_NAME like
+				CONCAT('%' ,
+				#{keyword} , '%'))</if>
+			<if test="searchType == 't'.toString()"> and QnA_TITLE like CONCAT('%', #{keyword}, '%') </if>
+			<if test="searchType == 'c'.toString()"> and QnA_CONTENTS like CONCAT('%' , #{keyword} , '%')
+			</if>
+			<if test="searchType == 'n'.toString()"> and USER_NAME like CONCAT('%' , #{keyword} , '%')   </if>
+
+		</if>
+	</sql>
+
+	<!-- 검색한 리스트 페이징 -->
+	<select id="listSearch" resultType="com.ipp.domain.QnAVO">
+      <![CDATA[
+		select * 
+		from 
+		tbl_qna
+		where qna_no > 0
+	]]>
+		<include refid="search"></include>
+		
+	<![CDATA[
+	order by qna_no desc
+	limit #{pageStart}, #{perPageNum}
+	]]>
+	</select>
+
+	<!-- QnA 검색할 때 전체 카운트 가져오기 -->
+	<select id="listSearchCount" resultType="int">
+		<![CDATA[
+		select count(*)
+		from
+				tbl_qna	
+			]]>
+		WHERE 1 = 1
+
+		<include refid="search"></include>
+
+
+
+	</select>
+
+	<!-- QnA - 조회수 -->
+	<update id="updateHits">
+
+		update tbl_QnA
+
+		set hits = hits + 1
+
+		where QNA_NO =
+		#{qnaNo}
+
+
+	</update>
+
+</mapper>
